@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор победителя настольного тенниса (Лайв)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        body.bg-dark-custom {
+            background: #282828 !important;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .form-container {
+            background: #333 !important;
+            color: #fff;
+            border: none;
+        }
+        input.form-control,
+        input.form-control:focus {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+        }
+        input.form-control::placeholder {
+            color: #aaa;
+            opacity: 1;
+        }
+        #result, #error {
+            background: #333 !important;
+            color: #fff;
+        }
+        @media (min-width: 768px) {
+            .form-container {
+                max-width: 500px;
+                margin: auto;
+            }
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 0.2rem;
+            font-weight: normal;
+        }
+        @media (max-width: 576px) {
+            .form-label { font-size: 0.8rem; }
+            .form-control-sm { font-size: 1rem; padding: 0.25rem 0.5rem; }
+            h1 { font-size: 1.1rem; }
+            .card { padding: 1rem !important; }
+        }
+        .text-center { text-align: center !important; }
+        .fw-bold { font-weight: bold !important; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+    </style>
+</head>
+<body class="bg-dark-custom">
+    <div class="container mt-3">
+        <div class="form-container card p-3 shadow-sm">
+            <h1 class="text-center mb-3" style="font-size: 1.5rem;">Калькулятор победителя настольного тенниса (Лайв)</h1>
+            <p class="text-muted text-center mb-3" style="font-size: 0.9rem;">
+                Введите текущий счет и коэффициенты <br>
+            </p>
+            <form id="mainForm" autocomplete="off">
+                <div class="row text-center mb-2">
+                    <div class="col-6 fw-bold">Игрок 1 (Геймы)</div>
+                    <div class="col-6 fw-bold">Игрок 2 (Геймы)</div>
+                </div>
+                <div class="row align-items-center mb-3">
+                    <div class="col-6">
+                        <label for="currentGamesP1" class="form-label visually-hidden">Текущие геймы Игрок 1</label>
+                        <input id="currentGamesP1" name="currentGamesP1" type="number" class="form-control form-control-sm text-center" min="0" max="3" value="0">
+                    </div>
+                    <div class="col-6">
+                        <label for="currentGamesP2" class="form-label visually-hidden">Текущие геймы Игрок 2</label>
+                        <input id="currentGamesP2" name="currentGamesP2" type="number" class="form-control form-control-sm text-center" min="0" max="3" value="0">
+                    </div>
+                </div>
+
+                <div class="row text-center mb-2">
+                    <div class="col-6 fw-bold">Игрок 1 (Очки в тек. гейме)</div>
+                    <div class="col-6 fw-bold">Игрок 2 (Очки в тек. гейме)</div>
+                </div>
+                <div class="row align-items-center mb-3">
+                    <div class="col-6">
+                        <label for="currentGamePointsP1" class="form-label visually-hidden">Очки Игрок 1 в текущем гейме</label>
+                        <input id="currentGamePointsP1" name="currentGamePointsP1" type="number" class="form-control form-control-sm text-center" min="0" max="100" value="0">
+                    </div>
+                    <div class="col-6">
+                        <label for="currentGamePointsP2" class="form-label visually-hidden">Очки Игрок 2 в текущем гейме</label>
+                        <input id="currentGamePointsP2" name="currentGamePointsP2" type="number" class="form-control form-control-sm text-center" min="0" max="100" value="0">
+                    </div>
+                </div>
+
+                <div class="row text-center mb-3">
+                    <div class="col-12 fw-bold mb-2">Кто подает?</div>
+                    <div class="col-6">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="servingPlayer" id="servingP1" value="player1" checked>
+                            <label class="form-check-label" for="servingP1">Игрок 1</label>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="servingPlayer" id="servingP2" value="player2">
+                            <label class="form-check-label" for="servingP2">Игрок 2</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-center mb-2">
+                    <div class="col-12 fw-bold">Коэффициенты на следующие геймы:</div>
+                </div>
+                <div class="row text-center mb-2">
+                    <div class="col-6 fw-bold">Игрок 1</div>
+                    <div class="col-6 fw-bold">Игрок 2</div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-6">
+                        <label for="g5p1" class="form-label visually-hidden">Коэффициент на гейм 5 — Игрок 1</label>
+                        <input id="g5p1" name="g5p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="5">
+                    </div>
+                    <div class="col-6">
+                        <label for="g5p2" class="form-label visually-hidden">Коэффициент на гейм 5 — Игрок 2</label>
+                        <input id="g5p2" name="g5p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="5">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-6">
+                        <label for="g6p1" class="form-label visually-hidden">Коэффициент на гейм 6 — Игрок 1</label>
+                        <input id="g6p1" name="g6p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="6">
+                    </div>
+                    <div class="col-6">
+                        <label for="g6p2" class="form-label visually-hidden">Коэффициент на гейм 6 — Игрок 2</label>
+                        <input id="g6p2" name="g6p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="6">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-6">
+                        <label for="g7p1" class="form-label visually-hidden">Коэффициент на гейм 7 — Игрок 1</label>
+                        <input id="g7p1" name="g7p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="7">
+                    </div>
+                    <div class="col-6">
+                        <label for="g7p2" class="form-label visually-hidden">Коэффициент на гейм 7 — Игрок 2</label>
+                        <input id="g7p2" name="g7p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="7">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-6">
+                        <label for="g8p1" class="form-label visually-hidden">Коэффициент на гейм 8 — Игрок 1</label>
+                        <input id="g8p1" name="g8p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="8">
+                    </div>
+                    <div class="col-6">
+                        <label for="g8p2" class="form-label visually-hidden">Коэффициент на гейм 8 — Игрок 2</label>
+                        <input id="g8p2" name="g8p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="8">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-6">
+                        <label for="g9p1" class="form-label visually-hidden">Коэффициент на гейм 9 — Игрок 1</label>
+                        <input id="g9p1" name="g9p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="9">
+                    </div>
+                    <div class="col-6">
+                        <label for="g9p2" class="form-label visually-hidden">Коэффициент на гейм 9 — Игрок 2</label>
+                        <input id="g9p2" name="g9p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="9">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-6">
+                        <label for="g10p1" class="form-label visually-hidden">Коэффициент на гейм 10 — Игрок 1</label>
+                        <input id="g10p1" name="g10p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="10">
+                    </div>
+                    <div class="col-6">
+                        <label for="g10p2" class="form-label visually-hidden">Коэффициент на гейм 10 — Игрок 2</label>
+                        <input id="g10p2" name="g10p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="10">
+                    </div>
+                </div>
+            </form>
+            <div id="result" class="mt-4 p-3 border rounded" style="display: none;">
+                <h4 class="text-center">Результат:</h4>
+                <p id="player1_sum"></p>
+                <p id="player2_sum"></p>
+                <p id="player1_adjusted_sum"></p>
+                <p id="player2_adjusted_sum"></p>
+                <h5 id="winner" class="text-center text-success"></h5>
+            </div>
+            <div id="error" class="mt-4 alert alert-danger" style="display: none;"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/script.js"></script>
+</body>
+</html>
