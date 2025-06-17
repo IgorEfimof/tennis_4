@@ -1,84 +1,81 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Список всех полей, включая 12 коэффициентов
+    // Список полей, теперь только коэффициенты
     const fields = [
-        'currentGamesP1', 'currentGamesP2', 'currentGamePointsP1', 'currentGamePointsP2',
         'g5P1', 'g5P2', 'g6P1', 'g6P2', 'g7P1', 'g7P2',
         'g8P1', 'g8P2', 'g9P1', 'g9P2', 'g10P1', 'g10P2'
     ];
 
-    // Функция для очистки и форматирования коэффициентов (автоматическое добавление "1.")
+    // Функция для очистки и форматирования коэффициентов (стандартный ввод X.XX)
     function handleCoeffInput(e, idx) {
         let input = e.target;
-        // Очищаем от всего, кроме цифр
-        let val = input.value.replace(/[^\d]/g, '');
+        // Разрешаем только цифры и точку
+        let val = input.value.replace(/[^\d.]/g, '');
 
-        if (val.length > 2) {
-            val = val.slice(0, 2); // Ограничиваем до двух цифр
+        // Ограничиваем количество точек до одной
+        let parts = val.split('.');
+        if (parts.length > 2) {
+            val = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Ограничиваем длину после точки до 2 символов
+        if (parts.length === 2 && parts[1].length > 2) {
+            val = parts[0] + '.' + parts[1].slice(0, 2);
+        }
+        
+        // Ограничиваем общую длину до 4 символов (например, 1.85)
+        if (val.length > 4) {
+            val = val.slice(0, 4);
         }
 
-        // Если введены две цифры, форматируем в "1.XX"
-        if (val.length === 2) {
-            input.value = `1.${val}`;
-        } else {
-            input.value = val; // Иначе оставляем как есть
-        }
+        input.value = val;
 
-        // Переход на следующее поле или запуск расчета
-        if (val.length === 2) { // Проверяем, что введены 2 цифры
+        // Автоматический переход к следующему полю при полном вводе (например, 1.XX)
+        if (val.length === 4 && val.includes('.')) {
             if (idx === fields.length - 1) {
                 input.blur(); // Убираем фокус с последнего поля
                 calculateWinner();
             } else {
-                let nextInputFound = false;
-                for (let i = idx + 1; i < fields.length; i++) {
-                    const nextInput = document.getElementById(fields[i]);
-                    if (nextInput) { // Просто переходим к следующему полю в списке
-                        nextInput.focus();
-                        nextInputFound = true;
-                        break;
-                    }
-                }
-                if (!nextInputFound) { // Если следующее поле не найдено (хотя такого быть не должно)
+                const nextInput = document.getElementById(fields[idx + 1]);
+                if (nextInput) {
+                    nextInput.focus();
+                } else {
                     input.blur();
                     calculateWinner();
                 }
             }
         }
-        calculateWinner(); // Также вызываем расчет при каждом изменении, чтобы динамически обновлять
+        calculateWinner(); // Вызываем расчет при каждом изменении для динамического обновления
     }
 
-    // Функция для обработки вставки коэффициентов (также форматируем в "1.XX")
+    // Функция для обработки вставки коэффициентов
     function handleCoeffPaste(e, idx) {
         e.preventDefault();
         let input = e.target;
         let text = (e.clipboardData || window.clipboardData).getData('text');
-        text = text.replace(/[^\d]/g, ''); // Очищаем от всего, кроме цифр
+        text = text.replace(/[^\d.]/g, ''); // Разрешаем только цифры и точку
 
-        if (text.length > 2) {
-            text = text.slice(0, 2); // Ограничиваем до двух цифр
+        let parts = text.split('.');
+        if (parts.length > 2) {
+            text = parts[0] + '.' + parts.slice(1).join('');
+        }
+        if (parts.length === 2 && parts[1].length > 2) {
+            text = parts[0] + '.' + parts[1].slice(0, 2);
+        }
+        if (text.length > 4) {
+            text = text.slice(0, 4);
         }
 
-        if (text.length === 2) {
-            input.value = `1.${text}`;
-        } else {
-            input.value = text;
-        }
+        input.value = text;
 
-        if (text.length === 2) {
+        if (text.length === 4 && text.includes('.')) {
             if (idx === fields.length - 1) {
                 input.blur();
                 calculateWinner();
             } else {
-                let nextInputFound = false;
-                for (let i = idx + 1; i < fields.length; i++) {
-                    const nextInput = document.getElementById(fields[i]);
-                    if (nextInput) {
-                        nextInput.focus();
-                        nextInputFound = true;
-                        break;
-                    }
-                }
-                if (!nextInputFound) {
+                const nextInput = document.getElementById(fields[idx + 1]);
+                if (nextInput) {
+                    nextInput.focus();
+                } else {
                     input.blur();
                     calculateWinner();
                 }
@@ -87,94 +84,43 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateWinner();
     }
 
+    // Привязываем обработчики событий ко всем полям ввода коэффициентов
     fields.forEach((id, idx) => {
         const input = document.getElementById(id);
         if (input) {
-            if (input.type === 'text') { // Применяем только к текстовым полям (коэффициентам)
-                input.setAttribute('maxlength', '2'); // Теперь 2 символа
-                input.setAttribute('inputmode', 'decimal');
-                input.classList.add('text-center');
-                input.addEventListener('input', (e) => handleCoeffInput(e, idx));
-                input.addEventListener('paste', (e) => handleCocoeffPaste(e, idx));
-                input.addEventListener('keypress', function(event) {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        if (idx === fields.length - 1) {
-                            input.blur();
-                            calculateWinner();
-                        } else {
-                            let nextInputFound = false;
-                            for (let i = idx + 1; i < fields.length; i++) {
-                                const nextInput = document.getElementById(fields[i]);
-                                if (nextInput) {
-                                    nextInput.focus();
-                                    nextInputFound = true;
-                                    break;
-                                }
-                            }
-                            if (!nextInputFound) {
-                                input.blur();
-                                calculateWinner();
-                            }
-                        }
-                    }
-                });
-            } else if (input.type === 'number' || input.type === 'radio') {
-                input.addEventListener('input', calculateWinner);
-                input.addEventListener('change', calculateWinner);
-                input.addEventListener('keypress', function(event) {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        if (idx < fields.length - 1) {
-                            const nextInput = document.getElementById(fields[idx + 1]);
-                            if (nextInput) {
-                                nextInput.focus();
-                            }
+            input.setAttribute('maxlength', '4'); // Макс. длина 4 символа (1.85)
+            input.setAttribute('inputmode', 'decimal'); // Числовая клавиатура с точкой для мобильных
+            input.classList.add('text-center');
+            input.addEventListener('input', (e) => handleCoeffInput(e, idx));
+            input.addEventListener('paste', (e) => handleCoeffPaste(e, idx));
+            input.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (idx === fields.length - 1) {
+                        input.blur();
+                        calculateWinner();
+                    } else {
+                        const nextInput = document.getElementById(fields[idx + 1]);
+                        if (nextInput) {
+                            nextInput.focus();
                         } else {
                             input.blur();
                             calculateWinner();
                         }
                     }
-                });
-            }
+                }
+            });
         }
     });
 
-    // Функция для обновления информации о текущем гейме (упрощенная)
-    function updateGameInfo() {
-        const currentGamesP1 = parseInt(document.getElementById('currentGamesP1').value) || 0;
-        const currentGamesP2 = parseInt(document.getElementById('currentGamesP2').value) || 0;
-        const currentGamePointsP1 = parseInt(document.getElementById('currentGamePointsP1').value) || 0;
-        const currentGamePointsP2 = parseInt(document.getElementById('currentGamePointsP2').value) || 0;
-
-        let gameNumber = currentGamesP1 + currentGamesP2 + 1;
-
-        const gameInfoSpan = document.getElementById('current_game_info');
-        if (gameInfoSpan) {
-            let infoText = `Гейм ${gameNumber}`;
-            if (currentGamePointsP1 > 0 || currentGamePointsP2 > 0) {
-                infoText += ` (счет ${currentGamePointsP1}-${currentGamePointsP2})`;
-            } else {
-                infoText += ` (0-0)`; // Показываем 0-0 если очки не введены
-            }
-            gameInfoSpan.textContent = infoText;
-        }
-    }
-
-
     // Главная функция расчета
     function calculateWinner() {
-        updateGameInfo(); // Обновляем информацию о гейме
-
         let player1Coeffs = [];
         let player2Coeffs = [];
-        let allCoeffsValid = true; // Будем проверять на валидность
+        let allCoeffsValid = true;
 
-        const currentGamesP1 = parseInt(document.getElementById('currentGamesP1').value) || 0;
-        const currentGamesP2 = parseInt(document.getElementById('currentGamesP2').value) || 0;
-        const currentGamePointsP1 = parseInt(document.getElementById('currentGamePointsP1').value) || 0;
-        const currentGamePointsP2 = parseInt(document.getElementById('currentGamePointsP2').value) || 0;
-        const servingPlayer = document.querySelector('input[name="servingPlayer"]:checked').value;
+        // Коэффициент для влияния "разбега" на сумму. Можно настроить.
+        const spreadWeight = 0.2; // Насколько сильно разбег влияет на скорректированную сумму
 
         // Собираем коэффициенты для геймов 5-10
         for (let i = 5; i <= 10; i++) {
@@ -185,10 +131,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const p1Val = parseFloat(p1CoeffInput.value);
                 const p2Val = parseFloat(p2CoeffInput.value);
 
-                // Если поле пустое или не является числом, оно невалидно.
-                // Но мы не хотим выводить ошибку, если пользователь просто не ввел все 12.
-                // Просто игнорируем невалидные коэффициенты в расчете.
-                if (!isNaN(p1Val) && p1Val >= 1.00 && p1Val < 2.00) { // Проверяем на адекватность кф
+                // Валидация: коэффициент должен быть числом и быть в адекватном диапазоне
+                if (!isNaN(p1Val) && p1Val >= 1.00 && p1Val <= 5.00) { // Например, кф. до 5.00
                     player1Coeffs.push(p1Val);
                     p1CoeffInput.classList.remove('is-invalid');
                 } else if (p1CoeffInput.value.length > 0) { // Если что-то введено, но невалидно
@@ -198,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     p1CoeffInput.classList.remove('is-invalid'); // Если пусто, то не ошибка
                 }
 
-                if (!isNaN(p2Val) && p2Val >= 1.00 && p2Val < 2.00) {
+                if (!isNaN(p2Val) && p2Val >= 1.00 && p2Val <= 5.00) {
                     player2Coeffs.push(p2Val);
                     p2CoeffInput.classList.remove('is-invalid');
                 } else if (p2CoeffInput.value.length > 0) {
@@ -210,15 +154,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Если введены невалидные коэффициенты, показываем ошибку
+        // Если есть невалидные коэффициенты, показываем ошибку и не рассчитываем
         if (!allCoeffsValid) {
-            document.getElementById('error').textContent = 'Проверьте введенные коэффициенты (например, "85" для 1.85).';
+            document.getElementById('error').textContent = 'Проверьте формат коэффициентов (например, 1.85).';
             document.getElementById('error').style.display = 'block';
             document.getElementById('result').style.display = 'none';
             return;
         }
 
-        // Если нет ни одного валидного коэффициента, то не рассчитываем
+        // Если нет ни одной пары валидных коэффициентов, то не рассчитываем
         if (player1Coeffs.length === 0 || player2Coeffs.length === 0) {
             document.getElementById('error').textContent = 'Введите хотя бы одну пару коэффициентов.';
             document.getElementById('error').style.display = 'block';
@@ -230,41 +174,47 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('error').style.display = 'none';
         document.getElementById('error').textContent = '';
 
-        // Суммируем десятичные части всех введенных коэффициентов
-        const sumDecimalPlayer1 = player1Coeffs.reduce((sum, coeff) => sum + (coeff % 1), 0);
-        const sumDecimalPlayer2 = player2Coeffs.reduce((sum, coeff) => sum + (coeff % 1), 0);
+        let totalDecimalPlayer1 = 0;
+        let totalDecimalPlayer2 = 0;
+        let totalSpreadAdjustment = 0; // Для накопления влияния разбега
 
-        let adjustedSumPlayer1 = sumDecimalPlayer1;
-        let adjustedSumPlayer2 = sumDecimalPlayer2;
+        // Суммируем десятичные части и рассчитываем влияние разбега
+        for (let i = 0; i < player1Coeffs.length; i++) {
+            const coeff1 = player1Coeffs[i];
+            const coeff2 = player2Coeffs[i];
 
-        const gameDiff = currentGamesP1 - currentGamesP2;
-        const gameWeight = 0.04;
-        if (gameDiff > 0) {
-            adjustedSumPlayer1 -= gameDiff * gameWeight;
-            adjustedSumPlayer2 += gameDiff * gameWeight;
-        } else if (gameDiff < 0) {
-            adjustedSumPlayer2 -= Math.abs(gameDiff) * gameWeight;
-            adjustedSumPlayer1 += Math.abs(gameDiff) * gameWeight;
+            totalDecimalPlayer1 += (coeff1 % 1);
+            totalDecimalPlayer2 += (coeff2 % 1);
+
+            // Разбег: абсолютная разница между коэффициентами
+            const spread = Math.abs(coeff1 - coeff2);
+            totalSpreadAdjustment += (spread * spreadWeight); // Учитываем разбег с весом
         }
 
-        const pointDiff = currentGamePointsP1 - currentGamePointsP2;
-        const pointWeight = 0.008;
-        if (pointDiff > 0) {
-            adjustedSumPlayer1 -= pointDiff * pointWeight;
-            adjustedSumPlayer2 += pointDiff * pointWeight;
-        } else if (pointDiff < 0) {
-            adjustedSumPlayer2 -= Math.abs(pointDiff) * pointWeight;
-            adjustedSumPlayer1 += Math.abs(pointDiff) * pointWeight;
+        // Применяем общий разбег к суммам десятичных частей
+        // Это пример применения. Можно адаптировать, чтобы разбег влиял по-другому,
+        // например, добавлялся к более слабому игроку или вычитался из более сильного.
+        // Сейчас он просто увеличивает общую разницу между суммами.
+        let adjustedSumPlayer1 = totalDecimalPlayer1 - (totalSpreadAdjustment / 2);
+        let adjustedSumPlayer2 = totalDecimalPlayer2 - (totalSpreadAdjustment / 2);
+
+        // Чтобы разбег не был слишком агрессивен, можно попробовать применить его как "штраф"
+        // для игрока с более высоким коэффициентом в каждой паре
+        adjustedSumPlayer1 = totalDecimalPlayer1;
+        adjustedSumPlayer2 = totalDecimalPlayer2;
+
+        for (let i = 0; i < player1Coeffs.length; i++) {
+            const coeff1 = player1Coeffs[i];
+            const coeff2 = player2Coeffs[i];
+            const spread = Math.abs(coeff1 - coeff2);
+
+            if (coeff1 > coeff2) { // Игрок 1 имеет больший коэффициент (считается "слабее" по кф)
+                adjustedSumPlayer1 += (spread * spreadWeight);
+            } else if (coeff2 > coeff1) { // Игрок 2 имеет больший коэффициент
+                adjustedSumPlayer2 += (spread * spreadWeight);
+            }
         }
 
-        const servingBonus = 0.015;
-        if (servingPlayer === 'player1') {
-            adjustedSumPlayer1 -= servingBonus;
-            adjustedSumPlayer2 += servingBonus;
-        } else if (servingPlayer === 'player2') {
-            adjustedSumPlayer2 -= servingBonus;
-            adjustedSumPlayer1 += servingBonus;
-        }
 
         let winnerMessage;
         if (adjustedSumPlayer1 < adjustedSumPlayer2) {
@@ -275,14 +225,14 @@ document.addEventListener('DOMContentLoaded', function() {
             winnerMessage = "Ничья";
         }
 
-        document.getElementById('player1_sum').textContent = `Сумма дес. частей (И1): ${sumDecimalPlayer1.toFixed(4)}`;
-        document.getElementById('player2_sum').textContent = `Сумма дес. частей (И2): ${sumDecimalPlayer2.toFixed(4)}`;
+        document.getElementById('player1_sum').textContent = `Сумма дес. частей (И1): ${totalDecimalPlayer1.toFixed(4)}`;
+        document.getElementById('player2_sum').textContent = `Сумма дес. частей (И2): ${totalDecimalPlayer2.toFixed(4)}`;
         document.getElementById('player1_adjusted_sum').textContent = `Скорр. сумма (И1): ${adjustedSumPlayer1.toFixed(4)}`;
         document.getElementById('player2_adjusted_sum').textContent = `Скорр. сумма (И2): ${adjustedSumPlayer2.toFixed(4)}`;
         document.getElementById('winner').textContent = winnerMessage;
         document.getElementById('result').style.display = 'block';
     }
 
-    // Инициализируем расчет при загрузке, чтобы показать актуальную информацию
+    // Инициализируем расчет при загрузке
     calculateWinner();
 });
