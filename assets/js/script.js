@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Список полей, теперь только текущие коэффициенты
+    // Список полей, только текущие коэффициенты
     const games = [5, 6, 7, 8, 9, 10]; // Номера геймов для итерации
     const fields = games.flatMap(g => [`g${g}P1`, `g${g}P2`]); // ['g5P1', 'g5P2', 'g6P1', 'g6P2', ...]
 
@@ -115,10 +115,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let player2Coeffs = []; // Для P2
         let allCoeffsValid = true;
 
-        // Фактор влияния разбега. Возможно, потребуется более высокое значение для заметного влияния.
-        // Это значение умножается на сумму разбега.
-        const spreadImpactFactor = 2.5; 
-
         // Собираем коэффициенты для геймов 5-10
         for (let i = 5; i <= 10; i++) {
             const p1Input = document.getElementById(`g${i}P1`);
@@ -136,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     p1Input.classList.add('is-invalid');
                     allCoeffsValid = false;
                 } else {
-                    player1Coeffs.push(NaN); // Добавляем NaN, чтобы сохранить индексы
+                    player1Coeffs.push(NaN); // Добавляем NaN, чтобы сохранить индексы и пропускать невалидные
                     p1Input.classList.remove('is-invalid'); // Если пусто, не помечаем как ошибку
                 }
 
@@ -147,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     p2Input.classList.add('is-invalid');
                     allCoeffsValid = false;
                 } else {
-                    player2Coeffs.push(NaN); // Добавляем NaN, чтобы сохранить индексы
+                    player2Coeffs.push(NaN); // Добавляем NaN, чтобы сохранить индексы и пропускать невалидные
                     p2Input.classList.remove('is-invalid');
                 }
             }
@@ -161,14 +157,26 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Проверяем, есть ли хотя бы один полный гейм для расчета
-        const hasValidGame = player1Coeffs.some(val => !isNaN(val)) && player2Coeffs.some(val => !isNaN(val));
-        if (!hasValidGame) {
-            document.getElementById('error').textContent = 'Введите хотя бы одну пару коэффициентов.';
+        // Проверяем, есть ли хотя бы один полный гейм для расчета (Г5 обязательно для начала)
+        if (isNaN(player1Coeffs[0]) || isNaN(player2Coeffs[0])) { // Если Г5 не заполнен полностью
+            document.getElementById('error').textContent = 'Заполните коэффициенты для Гейма 5, чтобы начать расчет.';
             document.getElementById('error').style.display = 'block';
             document.getElementById('result').style.display = 'none';
             return;
         }
+        
+        // Проверяем, есть ли хотя бы одна пара валидных коэффициентов (кроме Г5)
+        const hasAnyValidPair = games.slice(1).some((_, index) => // Начиная с Г6 (индекс 1)
+            !isNaN(player1Coeffs[index + 1]) && !isNaN(player2Coeffs[index + 1])
+        );
+
+        if (!hasAnyValidPair && (isNaN(player1Coeffs[0]) || isNaN(player2Coeffs[0]))) { // Если даже Г5 пуст
+             document.getElementById('error').textContent = 'Введите хотя бы одну пару коэффициентов.';
+             document.getElementById('error').style.display = 'block';
+             document.getElementById('result').style.display = 'none';
+             return;
+        }
+
 
         document.getElementById('error').style.display = 'none';
         document.getElementById('error').textContent = '';
@@ -186,28 +194,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const p1Current = player1Coeffs[i];
             const p2Current = player2Coeffs[i];
 
-            // Если текущий коэффициент невалиден, пропускаем его
-            if (isNaN(p1Current) || isNaN(p2Current)) continue;
+            // Суммируем десятичные части от ТЕКУЩИХ коэффициентов, только если они валидны
+            if (!isNaN(p1Current)) {
+                totalDecimalPlayer1 += (p1Current - Math.floor(p1Current));
+            }
+            if (!isNaN(p2Current)) {
+                totalDecimalPlayer2 += (p2Current - Math.floor(p2Current));
+            }
 
-            // Суммируем десятичные части от ТЕКУЩИХ коэффициентов
-            totalDecimalPlayer1 += (p1Current - Math.floor(p1Current));
-            totalDecimalPlayer2 += (p2Current - Math.floor(p2Current));
-
-            // Расчет разбега начинается с Г6 (индекс 1)
-            if (i > 0) {
+            // Расчет разбега начинается с Г6 (индекс 1), т.е. сравниваем текущий гейм с предыдущим
+            if (i > 0) { // Для геймов 6, 7, 8, 9, 10
                 const p1Previous = player1Coeffs[i - 1];
                 const p2Previous = player2Coeffs[i - 1];
 
-                if (!isNaN(p1Previous) && !isNaN(p2Previous)) { // Только если предыдущий кф. тоже валиден
-                    // Разбег для Игрока 1: (Кф. предыдущего гейма - Кф. текущего гейма)
-                    const spreadP1 = p1Previous - p1Current; 
+                // Разбег считаем только если оба коэффициента (текущий и предыдущий) валидны
+                if (!isNaN(p1Previous) && !isNaN(p1Current)) { 
+                    const spreadP1 = p1Previous - p1Current; // Положительное, если упал; отрицательное, если вырос
                     if (spreadP1 > 0) { // Кф. снизился
                         totalDecreaseSpreadP1 += spreadP1;
                     } else if (spreadP1 < 0) { // Кф. вырос
                         totalIncreaseSpreadP1 += Math.abs(spreadP1);
                     }
+                }
 
-                    // Разбег для Игрока 2
+                if (!isNaN(p2Previous) && !isNaN(p2Current)) {
                     const spreadP2 = p2Previous - p2Current;
                     if (spreadP2 > 0) { // Кф. снизился
                         totalDecreaseSpreadP2 += spreadP2;
@@ -217,34 +227,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-
-        // Финальная скорректированная сумма
-        // "Если у игрока сумма меньше и разбег в сторону понижения больше, то вероятность его выигрыша больше и наоборот."
-        // Значит, разбег на снижение уменьшает скорректированную сумму (усиливает игрока)
-        // Разбег на повышение увеличивает скорректированную сумму (ослабляет игрока)
-        let adjustedSumPlayer1 = totalDecimalPlayer1 - (totalDecreaseSpreadP1 * spreadImpactFactor) + (totalIncreaseSpreadP1 * spreadImpactFactor);
-        let adjustedSumPlayer2 = totalDecimalPlayer2 - (totalDecreaseSpreadP2 * spreadImpactFactor) + (totalIncreaseSpreadP2 * spreadImpactFactor);
         
-        let winnerMessage;
-        let advantage = 0;
-
-        if (adjustedSumPlayer1 < adjustedSumPlayer2) {
-            advantage = adjustedSumPlayer2 - adjustedSumPlayer1;
-            winnerMessage = `Победитель: Игрок 1 (преимущество ${advantage.toFixed(4)})`;
-        } else if (adjustedSumPlayer2 < adjustedSumPlayer1) {
-            advantage = adjustedSumPlayer1 - adjustedSumPlayer2;
-            winnerMessage = `Победитель: Игрок 2 (преимущество ${advantage.toFixed(4)})`;
+        // Определение общего победителя по сумме десятичных частей
+        let overallWinnerMessage;
+        let advantageDecimal = 0;
+        if (totalDecimalPlayer1 < totalDecimalPlayer2) {
+            advantageDecimal = totalDecimalPlayer2 - totalDecimalPlayer1;
+            overallWinnerMessage = `Победитель (дес. части): Игрок 1 (преимущество ${advantageDecimal.toFixed(4)})`;
+        } else if (totalDecimalPlayer2 < totalDecimalPlayer1) {
+            advantageDecimal = totalDecimalPlayer1 - totalDecimalPlayer2;
+            overallWinnerMessage = `Победитель (дес. части): Игрок 2 (преимущество ${advantageDecimal.toFixed(4)})`;
         } else {
-            winnerMessage = "Ничья";
+            overallWinnerMessage = "Десятичные части: Ничья";
+        }
+
+        // Анализ разбега для Игрока 1
+        let p1SpreadAnalysisMessage = `Игрок 1: ↓ ${totalDecreaseSpreadP1.toFixed(4)} | ↑ ${totalIncreaseSpreadP1.toFixed(4)}. `;
+        if (totalDecreaseSpreadP1 < totalIncreaseSpreadP1) {
+            p1SpreadAnalysisMessage += `Вероятность победы выше (↓ < ↑)`;
+        } else if (totalDecreaseSpreadP1 > totalIncreaseSpreadP1) {
+            p1SpreadAnalysisMessage += `Вероятность победы ниже (↓ > ↑)`;
+        } else if (totalDecreaseSpreadP1 === 0 && totalIncreaseSpreadP1 === 0) {
+            p1SpreadAnalysisMessage += `(Нет изменений Кф.)`;
+        } else {
+            p1SpreadAnalysisMessage += `(↓ = ↑)`;
+        }
+
+        // Анализ разбега для Игрока 2
+        let p2SpreadAnalysisMessage = `Игрок 2: ↓ ${totalDecreaseSpreadP2.toFixed(4)} | ↑ ${totalIncreaseSpreadP2.toFixed(4)}. `;
+        if (totalDecreaseSpreadP2 < totalIncreaseSpreadP2) {
+            p2SpreadAnalysisMessage += `Вероятность победы выше (↓ < ↑)`;
+        } else if (totalDecreaseSpreadP2 > totalIncreaseSpreadP2) {
+            p2SpreadAnalysisMessage += `Вероятность победы ниже (↓ > ↑)`;
+        } else if (totalDecreaseSpreadP2 === 0 && totalIncreaseSpreadP2 === 0) {
+            p2SpreadAnalysisMessage += `(Нет изменений Кф.)`;
+        } else {
+            p2SpreadAnalysisMessage += `(↓ = ↑)`;
         }
 
         document.getElementById('player1_sum').textContent = `Сумма дес. частей (И1): ${totalDecimalPlayer1.toFixed(4)}`;
         document.getElementById('player2_sum').textContent = `Сумма дес. частей (И2): ${totalDecimalPlayer2.toFixed(4)}`;
-        document.getElementById('player1_total_decrease_spread').textContent = `Разбег ↓ (И1): ${totalDecreaseSpreadP1.toFixed(4)}`;
-        document.getElementById('player2_total_decrease_spread').textContent = `Разбег ↓ (И2): ${totalDecreaseSpreadP2.toFixed(4)}`;
-        document.getElementById('player1_total_increase_spread').textContent = `Разбег ↑ (И1): ${totalIncreaseSpreadP1.toFixed(4)}`;
-        document.getElementById('player2_total_increase_spread').textContent = `Разбег ↑ (И2): ${totalIncreaseSpreadP2.toFixed(4)}`;
-        document.getElementById('winner').textContent = winnerMessage;
+        document.getElementById('p1_spread_analysis').textContent = p1SpreadAnalysisMessage;
+        document.getElementById('p2_spread_analysis').textContent = p2SpreadAnalysisMessage;
+        document.getElementById('overall_winner').textContent = overallWinnerMessage;
         document.getElementById('result').style.display = 'block';
     }
 
