@@ -157,27 +157,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Проверяем, есть ли хотя бы один полный гейм для расчета (Г5 обязательно для начала)
-        if (isNaN(player1Coeffs[0]) || isNaN(player2Coeffs[0])) { // Если Г5 не заполнен полностью
+        // Проверяем, что хотя бы Гейм 5 заполнен для начала расчетов
+        if (isNaN(player1Coeffs[0]) || isNaN(player2Coeffs[0])) {
             document.getElementById('error').textContent = 'Заполните коэффициенты для Гейма 5, чтобы начать расчет.';
             document.getElementById('error').style.display = 'block';
             document.getElementById('result').style.display = 'none';
             return;
         }
         
-        // Проверяем, есть ли хотя бы одна пара валидных коэффициентов (кроме Г5)
-        const hasAnyValidPair = games.slice(1).some((_, index) => // Начиная с Г6 (индекс 1)
-            !isNaN(player1Coeffs[index + 1]) && !isNaN(player2Coeffs[index + 1])
-        );
-
-        if (!hasAnyValidPair && (isNaN(player1Coeffs[0]) || isNaN(player2Coeffs[0]))) { // Если даже Г5 пуст
-             document.getElementById('error').textContent = 'Введите хотя бы одну пару коэффициентов.';
-             document.getElementById('error').style.display = 'block';
-             document.getElementById('result').style.display = 'none';
-             return;
-        }
-
-
         document.getElementById('error').style.display = 'none';
         document.getElementById('error').textContent = '';
 
@@ -229,47 +216,72 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Определение общего победителя по сумме десятичных частей
-        let overallWinnerMessage;
-        let advantageDecimal = 0;
+        let overallWinnerDecimalSumMessage;
+        let advantageDecimal = Math.abs(totalDecimalPlayer1 - totalDecimalPlayer2); // Абсолютное преимущество
+
         if (totalDecimalPlayer1 < totalDecimalPlayer2) {
-            advantageDecimal = totalDecimalPlayer2 - totalDecimalPlayer1;
-            overallWinnerMessage = `Победитель (дес. части): Игрок 1 (преимущество ${advantageDecimal.toFixed(4)})`;
+            overallWinnerDecimalSumMessage = `Победитель: Игрок 1 (преимущество ${advantageDecimal.toFixed(4)})`;
         } else if (totalDecimalPlayer2 < totalDecimalPlayer1) {
-            advantageDecimal = totalDecimalPlayer1 - totalDecimalPlayer2;
-            overallWinnerMessage = `Победитель (дес. части): Игрок 2 (преимущество ${advantageDecimal.toFixed(4)})`;
+            overallWinnerDecimalSumMessage = `Победитель: Игрок 2 (преимущество ${advantageDecimal.toFixed(4)})`;
         } else {
-            overallWinnerMessage = "Десятичные части: Ничья";
+            overallWinnerDecimalSumMessage = "Вероятно трость (разница дес. частей = 0)";
         }
 
-        // Анализ разбега для Игрока 1
-        let p1SpreadAnalysisMessage = `Игрок 1: ↓ ${totalDecreaseSpreadP1.toFixed(4)} | ↑ ${totalIncreaseSpreadP1.toFixed(4)}. `;
-        if (totalDecreaseSpreadP1 < totalIncreaseSpreadP1) {
-            p1SpreadAnalysisMessage += `Вероятность победы выше (↓ < ↑)`;
-        } else if (totalDecreaseSpreadP1 > totalIncreaseSpreadP1) {
-            p1SpreadAnalysisMessage += `Вероятность победы ниже (↓ > ↑)`;
-        } else if (totalDecreaseSpreadP1 === 0 && totalIncreaseSpreadP1 === 0) {
-            p1SpreadAnalysisMessage += `(Нет изменений Кф.)`;
+        // Формирование строк для анализа разбега
+        let p1SpreadSummaryText = `Игрок 1: ↓ ${totalDecreaseSpreadP1.toFixed(4)} | ↑ ${totalIncreaseSpreadP1.toFixed(4)}. `;
+        let p2SpreadSummaryText = `Игрок 2: ↓ ${totalDecreaseSpreadP2.toFixed(4)} | ↑ ${totalIncreaseSpreadP2.toFixed(4)}. `;
+
+        // Определение вероятного победителя по анализу разбега
+        let spreadAnalysisWinnerMessage = "Вероятный победитель по разбегу: ";
+        let p1LikelyWinner = false;
+        let p2LikelyWinner = false;
+
+        // Оценка для Игрока 1
+        if (totalDecreaseSpreadP1 > 0 || totalIncreaseSpreadP1 > 0) { // Если были изменения
+            if (totalDecreaseSpreadP1 < totalIncreaseSpreadP1) {
+                p1LikelyWinner = true;
+            } else if (totalDecreaseSpreadP1 > totalIncreaseSpreadP1) {
+                // Игрок 1 менее вероятный победитель по разбегу
+            } else { // Равные ↓ и ↑
+                // Нейтральная позиция по разбегу для Игрока 1
+            }
         } else {
-            p1SpreadAnalysisMessage += `(↓ = ↑)`;
+             // Нет изменений для Игрока 1
         }
 
-        // Анализ разбега для Игрока 2
-        let p2SpreadAnalysisMessage = `Игрок 2: ↓ ${totalDecreaseSpreadP2.toFixed(4)} | ↑ ${totalIncreaseSpreadP2.toFixed(4)}. `;
-        if (totalDecreaseSpreadP2 < totalIncreaseSpreadP2) {
-            p2SpreadAnalysisMessage += `Вероятность победы выше (↓ < ↑)`;
-        } else if (totalDecreaseSpreadP2 > totalIncreaseSpreadP2) {
-            p2SpreadAnalysisMessage += `Вероятность победы ниже (↓ > ↑)`;
-        } else if (totalDecreaseSpreadP2 === 0 && totalIncreaseSpreadP2 === 0) {
-            p2SpreadAnalysisMessage += `(Нет изменений Кф.)`;
+        // Оценка для Игрока 2
+        if (totalDecreaseSpreadP2 > 0 || totalIncreaseSpreadP2 > 0) { // Если были изменения
+            if (totalDecreaseSpreadP2 < totalIncreaseSpreadP2) {
+                p2LikelyWinner = true;
+            } else if (totalDecreaseSpreadP2 > totalIncreaseSpreadP2) {
+                // Игрок 2 менее вероятный победитель по разбегу
+            } else { // Равные ↓ и ↑
+                // Нейтральная позиция по разбегу для Игрока 2
+            }
         } else {
-            p2SpreadAnalysisMessage += `(↓ = ↑)`;
+             // Нет изменений для Игрока 2
+        }
+
+        if (p1LikelyWinner && !p2LikelyWinner) {
+            spreadAnalysisWinnerMessage += "Игрок 1";
+        } else if (!p1LikelyWinner && p2LikelyWinner) {
+            spreadAnalysisWinnerMessage += "Игрок 2";
+        } else if (p1LikelyWinner && p2LikelyWinner) {
+            spreadAnalysisWinnerMessage += "Оба игрока сильны (по разбегу)"; // Обе тенденции к победе
+        } else if (totalDecreaseSpreadP1 === 0 && totalIncreaseSpreadP1 === 0 && totalDecreaseSpreadP2 === 0 && totalIncreaseSpreadP2 === 0) {
+            spreadAnalysisWinnerMessage += "Недостаточно данных (нет изменений Кф.)";
+        } else {
+            spreadAnalysisWinnerMessage += "Неопределённо (по разбегу)"; // Никто не выигрывает по критерию или оба "проседают"
         }
 
         document.getElementById('player1_sum').textContent = `Сумма дес. частей (И1): ${totalDecimalPlayer1.toFixed(4)}`;
         document.getElementById('player2_sum').textContent = `Сумма дес. частей (И2): ${totalDecimalPlayer2.toFixed(4)}`;
-        document.getElementById('p1_spread_analysis').textContent = p1SpreadAnalysisMessage;
-        document.getElementById('p2_spread_analysis').textContent = p2SpreadAnalysisMessage;
-        document.getElementById('overall_winner').textContent = overallWinnerMessage;
+        document.getElementById('overall_winner_decimal_sum').textContent = overallWinnerDecimalSumMessage;
+        
+        document.getElementById('p1_spread_summary').textContent = p1SpreadSummaryText;
+        document.getElementById('p2_spread_summary').textContent = p2SpreadSummaryText;
+        document.getElementById('overall_winner_spread_analysis').textContent = spreadAnalysisWinnerMessage;
+
         document.getElementById('result').style.display = 'block';
     }
 
