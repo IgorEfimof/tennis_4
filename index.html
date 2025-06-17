@@ -126,18 +126,32 @@
             </p>
             <form id="mainForm" autocomplete="off">
                 <div class="row text-center mb-2">
+                    <div class="col-12 fw-bold mb-2">Формат матча (побед):</div>
+                    <div class="col-6">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="matchFormat" id="format3" value="3" checked>
+                            <label class="form-check-label" for="format3">До 3 побед</label>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="matchFormat" id="format4" value="4">
+                            <label class="form-check-label" for="format4">До 4 побед</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-center mb-2">
                     <div class="col-6 fw-bold">Игрок 1 (Геймы)</div>
                     <div class="col-6 fw-bold">Игрок 2 (Геймы)</div>
                 </div>
                 <div class="row align-items-center mb-3">
                     <div class="col-6">
                         <label for="currentGamesP1" class="form-label visually-hidden">Текущие геймы Игрок 1</label>
-                        <input id="currentGamesP1" name="currentGamesP1" type="number" class="form-control form-control-sm text-center" min="0" max="3" value="0">
-                    </div>
+                        <input id="currentGamesP1" name="currentGamesP1" type="number" class="form-control form-control-sm text-center" min="0" max="4" value="0"> </div>
                     <div class="col-6">
                         <label for="currentGamesP2" class="form-label visually-hidden">Текущие геймы Игрок 2</label>
-                        <input id="currentGamesP2" name="currentGamesP2" type="number" class="form-control form-control-sm text-center" min="0" max="3" value="0">
-                    </div>
+                        <input id="currentGamesP2" name="currentGamesP2" type="number" class="form-control form-control-sm text-center" min="0" max="4" value="0"> </div>
                 </div>
 
                 <div class="row text-center mb-2">
@@ -172,7 +186,7 @@
                 </div>
 
                 <div class="row text-center mb-2">
-                    <div class="col-12 fw-bold">Коэффициенты на следующий гейм:</div>
+                    <div class="col-12 fw-bold">Коэффициенты на гейм: <span id="current_game_info">?</span></div>
                 </div>
                 <div class="row text-center mb-2">
                     <div class="col-6 fw-bold">Игрок 1</div>
