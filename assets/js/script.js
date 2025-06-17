@@ -5,32 +5,23 @@ document.addEventListener('DOMContentLoaded', function() {
         'g8P1', 'g8P2', 'g9P1', 'g9P2', 'g10P1', 'g10P2'
     ];
 
-    // Функция для очистки и форматирования коэффициентов (стандартный ввод X.XX)
+    // Функция для очистки и форматирования коэффициентов (автоматическая точка)
     function handleCoeffInput(e, idx) {
         let input = e.target;
-        // Разрешаем только цифры и точку
-        let val = input.value.replace(/[^\d.]/g, '');
+        let val = input.value.replace(/[^\d]/g, ''); // Удаляем все, кроме цифр
 
-        // Ограничиваем количество точек до одной
-        let parts = val.split('.');
-        if (parts.length > 2) {
-            val = parts[0] + '.' + parts.slice(1).join('');
-        }
-        
-        // Ограничиваем длину после точки до 2 символов
-        if (parts.length === 2 && parts[1].length > 2) {
-            val = parts[0] + '.' + parts[1].slice(0, 2);
-        }
-        
-        // Ограничиваем общую длину до 4 символов (например, 1.85)
-        if (val.length > 4) {
-            val = val.slice(0, 4);
+        // Если введено 3 цифры, предполагаем формат "1XX" и делаем "1.XX"
+        if (val.length === 3) {
+            val = val.substring(0, 1) + '.' + val.substring(1, 3);
+        } else if (val.length > 3) {
+            val = val.substring(0, 1) + '.' + val.substring(1, 3); // Ограничиваем до 1.XX
         }
 
         input.value = val;
 
-        // Автоматический переход к следующему полю при полном вводе (например, 1.XX)
-        if (val.length === 4 && val.includes('.')) {
+        // Автоматический переход к следующему полю при полном вводе (1.XX)
+        // Инициируем переход, если поле заполнено до 1.XX (4 символа)
+        if (val.length === 4) {
             if (idx === fields.length - 1) {
                 input.blur(); // Убираем фокус с последнего поля
                 calculateWinner();
@@ -47,27 +38,25 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateWinner(); // Вызываем расчет при каждом изменении для динамического обновления
     }
 
-    // Функция для обработки вставки коэффициентов
+    // Функция для обработки вставки коэффициентов (автоматическая точка)
     function handleCoeffPaste(e, idx) {
         e.preventDefault();
         let input = e.target;
         let text = (e.clipboardData || window.clipboardData).getData('text');
-        text = text.replace(/[^\d.]/g, ''); // Разрешаем только цифры и точку
+        text = text.replace(/[^\d]/g, ''); // Удаляем все, кроме цифр
 
-        let parts = text.split('.');
-        if (parts.length > 2) {
-            text = parts[0] + '.' + parts.slice(1).join('');
+        if (text.length === 3) {
+            text = text.substring(0, 1) + '.' + text.substring(1, 3);
+        } else if (text.length > 3) {
+            text = text.substring(0, 1) + '.' + text.substring(1, 3); // Ограничиваем до 1.XX
+        } else if (text.length === 2) { // Если вставили "85", делаем "1.85"
+             text = '1.' + text;
         }
-        if (parts.length === 2 && parts[1].length > 2) {
-            text = parts[0] + '.' + parts[1].slice(0, 2);
-        }
-        if (text.length > 4) {
-            text = text.slice(0, 4);
-        }
+
 
         input.value = text;
 
-        if (text.length === 4 && text.includes('.')) {
+        if (text.length === 4) { // После вставки также переходим
             if (idx === fields.length - 1) {
                 input.blur();
                 calculateWinner();
@@ -94,6 +83,18 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('input', (e) => handleCoeffInput(e, idx));
             input.addEventListener('paste', (e) => handleCoeffPaste(e, idx));
             input.addEventListener('keypress', function(event) {
+                // Если нажата точка, пропускаем, но не даем вводить более одной
+                if (event.key === '.') {
+                    if (input.value.includes('.')) {
+                        event.preventDefault(); // Не даем вводить вторую точку
+                    }
+                    return; // Пропускаем дальше
+                }
+                // Если нажата не цифра и не Backspace, и не Enter
+                if (!/\d/.test(event.key) && event.key !== 'Backspace' && event.key !== 'Enter') {
+                    event.preventDefault(); // Запрещаем ввод нецифровых символов (кроме Backspace)
+                }
+
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     if (idx === fields.length - 1) {
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const p1Val = parseFloat(p1CoeffInput.value);
                 const p2Val = parseFloat(p2CoeffInput.value);
 
-                // Валидация: коэффициент должен быть числом и быть в адекватном диапазоне (например, до 10.00)
+                // Валидация: коэффициент должен быть числом и быть в адекватном диапазоне (например, от 1.00 до 10.00)
                 if (!isNaN(p1Val) && p1Val >= 1.00 && p1Val <= 10.00) { 
                     player1Coeffs.push(p1Val);
                     p1CoeffInput.classList.remove('is-invalid');
