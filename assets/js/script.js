@@ -1,9 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Список полей, только коэффициенты
-    const fields = [
-        'g5P1', 'g5P2', 'g6P1', 'g6P2', 'g7P1', 'g7P2',
-        'g8P1', 'g8P2', 'g9P1', 'g9P2', 'g10P1', 'g10P2'
-    ];
+    // Список полей, теперь пары "Initial" и "Current" для каждого игрока
+    const fields = [];
+    for (let i = 5; i <= 10; i++) {
+        fields.push(`g${i}P1Initial`);
+        fields.push(`g${i}P1Current`);
+        fields.push(`g${i}P2Initial`);
+        fields.push(`g${i}P2Current`);
+    }
 
     // Функция для очистки и форматирования коэффициентов (автоматическая точка)
     function handleCoeffInput(e, idx) {
@@ -52,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (text.length === 2) { // Если вставили "85", делаем "1.85"
              text = '1.' + text;
         }
-
 
         input.value = text;
 
@@ -116,57 +118,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Главная функция расчета
     function calculateWinner() {
-        let player1Coeffs = [];
-        let player2Coeffs = [];
+        let player1CurrentCoeffs = [];
+        let player2CurrentCoeffs = [];
+        let player1InitialCoeffs = [];
+        let player2InitialCoeffs = [];
+        
         let allCoeffsValid = true;
 
         // Фактор влияния разбега. Настройте это значение для определения силы влияния.
         // Чем больше значение, тем сильнее разбег будет влиять на скорректированную сумму.
-        const spreadImpactFactor = 0.5; 
+        const spreadImpactFactor = 2.0; // Возможно, потребуется более высокое значение для заметного влияния
 
         // Собираем коэффициенты для геймов 5-10
         for (let i = 5; i <= 10; i++) {
-            const p1CoeffInput = document.getElementById(`g${i}P1`);
-            const p2CoeffInput = document.getElementById(`g${i}P2`);
+            const p1InitialInput = document.getElementById(`g${i}P1Initial`);
+            const p1CurrentInput = document.getElementById(`g${i}P1Current`);
+            const p2InitialInput = document.getElementById(`g${i}P2Initial`);
+            const p2CurrentInput = document.getElementById(`g${i}P2Current`);
 
-            if (p1CoeffInput && p2CoeffInput) {
-                const p1Val = parseFloat(p1CoeffInput.value);
-                const p2Val = parseFloat(p2CoeffInput.value);
+            const inputs = [p1InitialInput, p1CurrentInput, p2InitialInput, p2CurrentInput];
 
-                // Валидация: коэффициент должен быть числом и быть в адекватном диапазоне (например, от 1.00 до 10.00)
-                if (!isNaN(p1Val) && p1Val >= 1.00 && p1Val <= 10.00) { 
-                    player1Coeffs.push(p1Val);
-                    p1CoeffInput.classList.remove('is-invalid');
-                } else if (p1CoeffInput.value.length > 0) { // Если что-то введено, но невалидно
-                    p1CoeffInput.classList.add('is-invalid');
+            inputs.forEach(input => {
+                if (!input) return; // Пропускаем, если поле не найдено
+
+                const val = parseFloat(input.value);
+                // Валидация: коэффициент должен быть числом и быть в адекватном диапазоне (от 1.00 до 10.00)
+                if (!isNaN(val) && val >= 1.00 && val <= 10.00) { 
+                    input.classList.remove('is-invalid');
+                } else if (input.value.length > 0) { // Если что-то введено, но невалидно
+                    input.classList.add('is-invalid');
                     allCoeffsValid = false;
                 } else {
-                    p1CoeffInput.classList.remove('is-invalid'); // Если пусто, то не ошибка
+                    input.classList.remove('is-invalid'); // Если пусто, то не ошибка
                 }
+            });
 
-                if (!isNaN(p2Val) && p2Val >= 1.00 && p2Val <= 10.00) {
-                    player2Coeffs.push(p2Val);
-                    p2CoeffInput.classList.remove('is-invalid');
-                } else if (p2CoeffInput.value.length > 0) {
-                    p2CoeffInput.classList.add('is-invalid');
-                    allCoeffsValid = false;
-                } else {
-                    p2CoeffInput.classList.remove('is-invalid');
-                }
+            // Добавляем значения только если они валидны и присутствуют оба
+            if (!isNaN(parseFloat(p1InitialInput.value)) && !isNaN(parseFloat(p1CurrentInput.value)) &&
+                !isNaN(parseFloat(p2InitialInput.value)) && !isNaN(parseFloat(p2CurrentInput.value)) &&
+                p1InitialInput.value.length > 0 && p1CurrentInput.value.length > 0 &&
+                p2InitialInput.value.length > 0 && p2CurrentInput.value.length > 0) {
+                
+                player1InitialCoeffs.push(parseFloat(p1InitialInput.value));
+                player1CurrentCoeffs.push(parseFloat(p1CurrentInput.value));
+                player2InitialCoeffs.push(parseFloat(p2InitialInput.value));
+                player2CurrentCoeffs.push(parseFloat(p2CurrentInput.value));
+            } else if (p1InitialInput.value.length > 0 || p1CurrentInput.value.length > 0 ||
+                       p2InitialInput.value.length > 0 || p2CurrentInput.value.length > 0) {
+                // Если хоть одно поле в гейме заполнено, но пара не полная, считаем невалидным
+                allCoeffsValid = false;
             }
         }
 
         // Если есть невалидные коэффициенты, показываем ошибку и не рассчитываем
         if (!allCoeffsValid) {
-            document.getElementById('error').textContent = 'Проверьте формат коэффициентов (например, 1.85).';
+            document.getElementById('error').textContent = 'Проверьте формат или полноту ввода коэффициентов (например, 1.85). Все поля для гейма должны быть заполнены.';
             document.getElementById('error').style.display = 'block';
             document.getElementById('result').style.display = 'none';
             return;
         }
 
-        // Если нет ни одной пары валидных коэффициентов, то не рассчитываем
-        if (player1Coeffs.length === 0 || player2Coeffs.length === 0 || player1Coeffs.length !== player2Coeffs.length) {
-            document.getElementById('error').textContent = 'Введите хотя бы одну пару коэффициентов для обоих игроков.';
+        // Если нет ни одной полной пары валидных коэффициентов, то не рассчитываем
+        if (player1CurrentCoeffs.length === 0) {
+            document.getElementById('error').textContent = 'Введите хотя бы одну полную пару коэффициентов (начальный и текущий) для обоих игроков.';
             document.getElementById('error').style.display = 'block';
             document.getElementById('result').style.display = 'none';
             return;
@@ -178,33 +192,44 @@ document.addEventListener('DOMContentLoaded', function() {
         let totalDecimalPlayer1 = 0;
         let totalDecimalPlayer2 = 0;
         
-        let adjustedSumPlayer1 = 0;
-        let adjustedSumPlayer2 = 0;
+        let totalDecreaseSpreadP1 = 0; // Сумма разбегов на снижение для Игрока 1
+        let totalIncreaseSpreadP1 = 0; // Сумма разбегов на повышение для Игрока 1
+        let totalDecreaseSpreadP2 = 0; // Сумма разбегов на снижение для Игрока 2
+        let totalIncreaseSpreadP2 = 0; // Сумма разбегов на повышение для Игрока 2
 
-        // Суммируем десятичные части и корректируем на основе разбега
-        for (let i = 0; i < player1Coeffs.length; i++) {
-            const coeff1 = player1Coeffs[i];
-            const coeff2 = player2Coeffs[i];
+        // Суммируем десятичные части и рассчитываем разбеги
+        for (let i = 0; i < player1CurrentCoeffs.length; i++) {
+            const p1Initial = player1InitialCoeffs[i];
+            const p1Current = player1CurrentCoeffs[i];
+            const p2Initial = player2InitialCoeffs[i];
+            const p2Current = player2CurrentCoeffs[i];
 
-            // Суммируем десятичные части
-            totalDecimalPlayer1 += (coeff1 - Math.floor(coeff1)); // Берем только дробную часть
-            totalDecimalPlayer2 += (coeff2 - Math.floor(coeff2));
+            // Суммируем десятичные части от ТЕКУЩИХ коэффициентов
+            totalDecimalPlayer1 += (p1Current - Math.floor(p1Current));
+            totalDecimalPlayer2 += (p2Current - Math.floor(p2Current));
 
-            // Рассчитываем разбег
-            const spread = Math.abs(coeff1 - coeff2);
+            // Расчет разбега для Игрока 1
+            const spreadP1 = p1Initial - p1Current; // Положительное, если упал; отрицательное, если вырос
+            if (spreadP1 > 0) {
+                totalDecreaseSpreadP1 += spreadP1;
+            } else if (spreadP1 < 0) {
+                totalIncreaseSpreadP1 += Math.abs(spreadP1); // Учитываем абсолютное значение роста
+            }
 
-            // Применяем влияние разбега
-            if (coeff1 < coeff2) { // Если Кф. Игрока 1 ниже (он "сильнее"), уменьшаем его скорректированную сумму
-                adjustedSumPlayer1 += (coeff1 - Math.floor(coeff1)) - (spread * spreadImpactFactor);
-                adjustedSumPlayer2 += (coeff2 - Math.floor(coeff2)) + (spread * spreadImpactFactor);
-            } else if (coeff2 < coeff1) { // Если Кф. Игрока 2 ниже (он "сильнее"), уменьшаем его скорректированную сумму
-                adjustedSumPlayer1 += (coeff1 - Math.floor(coeff1)) + (spread * spreadImpactFactor);
-                adjustedSumPlayer2 += (coeff2 - Math.floor(coeff2)) - (spread * spreadImpactFactor);
-            } else { // Если коэффициенты равны, просто добавляем десятичные части без корректировки разбега
-                adjustedSumPlayer1 += (coeff1 - Math.floor(coeff1));
-                adjustedSumPlayer2 += (coeff2 - Math.floor(coeff2));
+            // Расчет разбега для Игрока 2
+            const spreadP2 = p2Initial - p2Current; // Положительное, если упал; отрицательное, если вырос
+            if (spreadP2 > 0) {
+                totalDecreaseSpreadP2 += spreadP2;
+            } else if (spreadP2 < 0) {
+                totalIncreaseSpreadP2 += Math.abs(spreadP2);
             }
         }
+
+        // Финальная скорректированная сумма
+        // Чем больше разбег на снижение, тем "лучше" игрок, значит, его сумма должна уменьшаться.
+        // Чем больше разбег на повышение, тем "хуже" игрок, значит, его сумма должна увеличиваться.
+        let adjustedSumPlayer1 = totalDecimalPlayer1 - (totalDecreaseSpreadP1 * spreadImpactFactor) + (totalIncreaseSpreadP1 * spreadImpactFactor);
+        let adjustedSumPlayer2 = totalDecimalPlayer2 - (totalDecreaseSpreadP2 * spreadImpactFactor) + (totalIncreaseSpreadP2 * spreadImpactFactor);
         
         let winnerMessage;
         if (adjustedSumPlayer1 < adjustedSumPlayer2) {
@@ -217,8 +242,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('player1_sum').textContent = `Сумма дес. частей (И1): ${totalDecimalPlayer1.toFixed(4)}`;
         document.getElementById('player2_sum').textContent = `Сумма дес. частей (И2): ${totalDecimalPlayer2.toFixed(4)}`;
-        document.getElementById('player1_adjusted_sum').textContent = `Скорр. сумма (И1): ${adjustedSumPlayer1.toFixed(4)}`;
-        document.getElementById('player2_adjusted_sum').textContent = `Скорр. сумма (И2): ${adjustedSumPlayer2.toFixed(4)}`;
+        document.getElementById('player1_total_decrease_spread').textContent = `Разбег ↓ (И1): ${totalDecreaseSpreadP1.toFixed(4)}`;
+        document.getElementById('player2_total_decrease_spread').textContent = `Разбег ↓ (И2): ${totalDecreaseSpreadP2.toFixed(4)}`;
+        document.getElementById('player1_total_increase_spread').textContent = `Разбег ↑ (И1): ${totalIncreaseSpreadP1.toFixed(4)}`;
+        document.getElementById('player2_total_increase_spread').textContent = `Разбег ↑ (И2): ${totalIncreaseSpreadP2.toFixed(4)}`;
         document.getElementById('winner').textContent = winnerMessage;
         document.getElementById('result').style.display = 'block';
     }
