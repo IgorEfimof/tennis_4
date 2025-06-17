@@ -3,66 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор победителя настольного тенниса (Лайв)</title>
+    <title>Калькулятор НТ (Лайв)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
     <style>
+        /* Общие стили */
         body.bg-dark-custom {
             background: #282828 !important;
             color: #fff;
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 0;
+        }
+        .container {
+            flex-grow: 1;
         }
         .form-container {
             background: #333 !important;
             color: #fff;
             border: none;
+            padding: 1rem !important;
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
         }
+
+        /* Поля ввода */
         input.form-control,
         input.form-control:focus {
             background: #222;
             color: #fff;
             border: 1px solid #444;
+            height: 28px;
+            padding: 0 0.5rem;
+            font-size: 0.9rem;
         }
         input.form-control::placeholder {
             color: #aaa;
             opacity: 1;
         }
+
+        /* Результат и ошибки */
         #result, #error {
             background: #333 !important;
             color: #fff;
+            padding: 0.8rem !important;
+            margin-top: 1rem !important;
         }
-        @media (min-width: 768px) {
-            .form-container {
-                max-width: 500px;
-                margin: auto;
-            }
+        #result h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem !important;
         }
+        #result p {
+            margin-bottom: 0.2rem;
+            font-size: 0.85rem;
+        }
+        #result h5 {
+             font-size: 1rem;
+        }
+
+
+        /* Отступы и шрифты */
+        .mb-1 { margin-bottom: 0.4rem !important; }
+        .mb-2 { margin-bottom: 0.6rem !important; }
+        .mb-3 { margin-bottom: 0.8rem !important; }
+        .mt-3 { margin-top: 0.8rem !important; }
+        .mt-4 { margin-top: 1rem !important; }
+
+        h1 {
+            font-size: 1.3rem !important;
+            margin-bottom: 0.8rem !important;
+        }
+        p.text-muted {
+            font-size: 0.8rem !important;
+            margin-bottom: 0.8rem !important;
+        }
+
         .form-label {
             display: block;
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.1rem;
             font-weight: normal;
+            font-size: 0.85rem;
         }
+
+        /* Стили для маленьких экранов (уже были, но оптимизируем) */
         @media (max-width: 576px) {
-            .form-label { font-size: 0.8rem; }
-            .form-control-sm { font-size: 1rem; padding: 0.25rem 0.5rem; }
-            h1 { font-size: 1.1rem; }
-            .card { padding: 1rem !important; }
+            .form-label { font-size: 0.75rem; }
+            .form-control-sm { font-size: 0.85rem; padding: 0.15rem 0.4rem; height: 26px; }
+            h1 { font-size: 1.0rem !important; }
+            .card { padding: 0.8rem !important; }
+            body.bg-dark-custom { padding: 5px 0; }
         }
-        .text-center { text-align: center !important; }
-        .fw-bold { font-weight: bold !important; }
-        .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+        /* Bootstrap переопределения для радио-кнопок */
+        .form-check-input {
+            width: 1em;
+            height: 1em;
+            margin-top: 0.25em;
+            vertical-align: top;
+            background-color: #222;
+            border: 1px solid #444;
+        }
         .form-check-input:checked {
             background-color: #0d6efd;
             border-color: #0d6efd;
+        }
+        .form-check-label {
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+        .form-check-inline {
+            margin-right: 0.5rem !important;
         }
     </style>
 </head>
 <body class="bg-dark-custom">
     <div class="container mt-3">
-        <div class="form-container card p-3 shadow-sm">
-            <h1 class="text-center mb-3" style="font-size: 1.5rem;">Калькулятор победителя настольного тенниса (Лайв)</h1>
-            <p class="text-muted text-center mb-3" style="font-size: 0.9rem;">
-                Введите текущий счет и коэффициенты <br>
+        <div class="form-container card shadow-sm">
+            <h1 class="text-center">Калькулятор настольного тенниса (Лайв)</h1>
+            <p class="text-muted text-center mb-3">
+                Введите текущий счет и коэффициенты на *следующий* гейм
             </p>
             <form id="mainForm" autocomplete="off">
                 <div class="row text-center mb-2">
@@ -81,8 +141,8 @@
                 </div>
 
                 <div class="row text-center mb-2">
-                    <div class="col-6 fw-bold">Игрок 1 (Очки в тек. гейме)</div>
-                    <div class="col-6 fw-bold">Игрок 2 (Очки в тек. гейме)</div>
+                    <div class="col-6 fw-bold">Игрок 1 (Очки)</div>
+                    <div class="col-6 fw-bold">Игрок 2 (Очки)</div>
                 </div>
                 <div class="row align-items-center mb-3">
                     <div class="col-6">
@@ -96,7 +156,7 @@
                 </div>
 
                 <div class="row text-center mb-3">
-                    <div class="col-12 fw-bold mb-2">Кто подает?</div>
+                    <div class="col-12 fw-bold mb-2">Подает:</div>
                     <div class="col-6">
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="servingPlayer" id="servingP1" value="player1" checked>
@@ -112,7 +172,7 @@
                 </div>
 
                 <div class="row text-center mb-2">
-                    <div class="col-12 fw-bold">Коэффициенты на следующие геймы:</div>
+                    <div class="col-12 fw-bold">Коэффициенты на следующий гейм:</div>
                 </div>
                 <div class="row text-center mb-2">
                     <div class="col-6 fw-bold">Игрок 1</div>
@@ -120,62 +180,12 @@
                 </div>
                 <div class="row align-items-center mb-1">
                     <div class="col-6">
-                        <label for="g5p1" class="form-label visually-hidden">Коэффициент на гейм 5 — Игрок 1</label>
-                        <input id="g5p1" name="g5p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="5">
+                        <label for="gNextP1" class="form-label visually-hidden">Коэффициент на следующий гейм — Игрок 1</label>
+                        <input id="gNextP1" name="gNextP1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" required placeholder="Кф. И1">
                     </div>
                     <div class="col-6">
-                        <label for="g5p2" class="form-label visually-hidden">Коэффициент на гейм 5 — Игрок 2</label>
-                        <input id="g5p2" name="g5p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="5">
-                    </div>
-                </div>
-                <div class="row align-items-center mb-1">
-                    <div class="col-6">
-                        <label for="g6p1" class="form-label visually-hidden">Коэффициент на гейм 6 — Игрок 1</label>
-                        <input id="g6p1" name="g6p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="6">
-                    </div>
-                    <div class="col-6">
-                        <label for="g6p2" class="form-label visually-hidden">Коэффициент на гейм 6 — Игрок 2</label>
-                        <input id="g6p2" name="g6p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="6">
-                    </div>
-                </div>
-                <div class="row align-items-center mb-1">
-                    <div class="col-6">
-                        <label for="g7p1" class="form-label visually-hidden">Коэффициент на гейм 7 — Игрок 1</label>
-                        <input id="g7p1" name="g7p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="7">
-                    </div>
-                    <div class="col-6">
-                        <label for="g7p2" class="form-label visually-hidden">Коэффициент на гейм 7 — Игрок 2</label>
-                        <input id="g7p2" name="g7p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="7">
-                    </div>
-                </div>
-                <div class="row align-items-center mb-1">
-                    <div class="col-6">
-                        <label for="g8p1" class="form-label visually-hidden">Коэффициент на гейм 8 — Игрок 1</label>
-                        <input id="g8p1" name="g8p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="8">
-                    </div>
-                    <div class="col-6">
-                        <label for="g8p2" class="form-label visually-hidden">Коэффициент на гейм 8 — Игрок 2</label>
-                        <input id="g8p2" name="g8p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="8">
-                    </div>
-                </div>
-                <div class="row align-items-center mb-1">
-                    <div class="col-6">
-                        <label for="g9p1" class="form-label visually-hidden">Коэффициент на гейм 9 — Игрок 1</label>
-                        <input id="g9p1" name="g9p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="9">
-                    </div>
-                    <div class="col-6">
-                        <label for="g9p2" class="form-label visually-hidden">Коэффициент на гейм 9 — Игрок 2</label>
-                        <input id="g9p2" name="g9p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="9">
-                    </div>
-                </div>
-                <div class="row align-items-center mb-1">
-                    <div class="col-6">
-                        <label for="g10p1" class="form-label visually-hidden">Коэффициент на гейм 10 — Игрок 1</label>
-                        <input id="g10p1" name="g10p1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="10">
-                    </div>
-                    <div class="col-6">
-                        <label for="g10p2" class="form-label visually-hidden">Коэффициент на гейм 10 — Игрок 2</label>
-                        <input id="g10p2" name="g10p2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" placeholder="10">
+                        <label for="gNextP2" class="form-label visually-hidden">Коэффициент на следующий гейм — Игрок 2</label>
+                        <input id="gNextP2" name="gNextP2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" required placeholder="Кф. И2">
                     </div>
                 </div>
             </form>
