@@ -62,7 +62,6 @@
              font-size: 1rem;
         }
 
-
         /* Отступы и шрифты */
         .mb-1 { margin-bottom: 0.4rem !important; }
         .mb-2 { margin-bottom: 0.6rem !important; }
@@ -122,25 +121,9 @@
         <div class="form-container card shadow-sm">
             <h1 class="text-center">Калькулятор настольного тенниса (Лайв)</h1>
             <p class="text-muted text-center mb-3">
-                Введите текущий счет и коэффициенты на *следующий* гейм
+                Введите текущий счет, подающего и коэффициенты
             </p>
             <form id="mainForm" autocomplete="off">
-                <div class="row text-center mb-2">
-                    <div class="col-12 fw-bold mb-2">Формат матча (побед):</div>
-                    <div class="col-6">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="matchFormat" id="format3" value="3" checked>
-                            <label class="form-check-label" for="format3">До 3 побед</label>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="matchFormat" id="format4" value="4">
-                            <label class="form-check-label" for="format4">До 4 побед</label>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="row text-center mb-2">
                     <div class="col-6 fw-bold">Игрок 1 (Геймы)</div>
                     <div class="col-6 fw-bold">Игрок 2 (Геймы)</div>
@@ -148,10 +131,12 @@
                 <div class="row align-items-center mb-3">
                     <div class="col-6">
                         <label for="currentGamesP1" class="form-label visually-hidden">Текущие геймы Игрок 1</label>
-                        <input id="currentGamesP1" name="currentGamesP1" type="number" class="form-control form-control-sm text-center" min="0" max="4" value="0"> </div>
+                        <input id="currentGamesP1" name="currentGamesP1" type="number" class="form-control form-control-sm text-center" min="0" value="0">
+                    </div>
                     <div class="col-6">
                         <label for="currentGamesP2" class="form-label visually-hidden">Текущие геймы Игрок 2</label>
-                        <input id="currentGamesP2" name="currentGamesP2" type="number" class="form-control form-control-sm text-center" min="0" max="4" value="0"> </div>
+                        <input id="currentGamesP2" name="currentGamesP2" type="number" class="form-control form-control-sm text-center" min="0" value="0">
+                    </div>
                 </div>
 
                 <div class="row text-center mb-2">
@@ -161,11 +146,11 @@
                 <div class="row align-items-center mb-3">
                     <div class="col-6">
                         <label for="currentGamePointsP1" class="form-label visually-hidden">Очки Игрок 1 в текущем гейме</label>
-                        <input id="currentGamePointsP1" name="currentGamePointsP1" type="number" class="form-control form-control-sm text-center" min="0" max="100" value="0">
+                        <input id="currentGamePointsP1" name="currentGamePointsP1" type="number" class="form-control form-control-sm text-center" min="0" value="0">
                     </div>
                     <div class="col-6">
                         <label for="currentGamePointsP2" class="form-label visually-hidden">Очки Игрок 2 в текущем гейме</label>
-                        <input id="currentGamePointsP2" name="currentGamePointsP2" type="number" class="form-control form-control-sm text-center" min="0" max="100" value="0">
+                        <input id="currentGamePointsP2" name="currentGamePointsP2" type="number" class="form-control form-control-sm text-center" min="0" value="0">
                     </div>
                 </div>
 
@@ -186,22 +171,80 @@
                 </div>
 
                 <div class="row text-center mb-2">
-                    <div class="col-12 fw-bold">Коэффициенты на гейм: <span id="current_game_info">?</span></div>
+                    <div class="col-12 fw-bold">Коэффициенты на геймы: <span id="current_game_info">?</span></div>
                 </div>
                 <div class="row text-center mb-2">
                     <div class="col-6 fw-bold">Игрок 1</div>
                     <div class="col-6 fw-bold">Игрок 2</div>
                 </div>
+
                 <div class="row align-items-center mb-1">
-                    <div class="col-6">
-                        <label for="gNextP1" class="form-label visually-hidden">Коэффициент на следующий гейм — Игрок 1</label>
-                        <input id="gNextP1" name="gNextP1" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" required placeholder="Кф. И1">
+                    <div class="col-2 text-end fw-bold">Г5:</div>
+                    <div class="col-4">
+                        <label for="g5P1" class="form-label visually-hidden">Кф. Г5 И1</label>
+                        <input id="g5P1" name="g5P1" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="85">
                     </div>
-                    <div class="col-6">
-                        <label for="gNextP2" class="form-label visually-hidden">Коэффициент на следующий гейм — Игрок 2</label>
-                        <input id="gNextP2" name="gNextP2" type="text" class="form-control form-control-sm text-center" maxlength="4" inputmode="decimal" autocomplete="off" required placeholder="Кф. И2">
+                    <div class="col-4">
+                        <label for="g5P2" class="form-label visually-hidden">Кф. Г5 И2</label>
+                        <input id="g5P2" name="g5P2" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="91">
                     </div>
                 </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-2 text-end fw-bold">Г6:</div>
+                    <div class="col-4">
+                        <label for="g6P1" class="form-label visually-hidden">Кф. Г6 И1</label>
+                        <input id="g6P1" name="g6P1" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="85">
+                    </div>
+                    <div class="col-4">
+                        <label for="g6P2" class="form-label visually-hidden">Кф. Г6 И2</label>
+                        <input id="g6P2" name="g6P2" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="91">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-2 text-end fw-bold">Г7:</div>
+                    <div class="col-4">
+                        <label for="g7P1" class="form-label visually-hidden">Кф. Г7 И1</label>
+                        <input id="g7P1" name="g7P1" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="85">
+                    </div>
+                    <div class="col-4">
+                        <label for="g7P2" class="form-label visually-hidden">Кф. Г7 И2</label>
+                        <input id="g7P2" name="g7P2" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="91">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-2 text-end fw-bold">Г8:</div>
+                    <div class="col-4">
+                        <label for="g8P1" class="form-label visually-hidden">Кф. Г8 И1</label>
+                        <input id="g8P1" name="g8P1" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="85">
+                    </div>
+                    <div class="col-4">
+                        <label for="g8P2" class="form-label visually-hidden">Кф. Г8 И2</label>
+                        <input id="g8P2" name="g8P2" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="91">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-2 text-end fw-bold">Г9:</div>
+                    <div class="col-4">
+                        <label for="g9P1" class="form-label visually-hidden">Кф. Г9 И1</label>
+                        <input id="g9P1" name="g9P1" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="85">
+                    </div>
+                    <div class="col-4">
+                        <label for="g9P2" class="form-label visually-hidden">Кф. Г9 И2</label>
+                        <input id="g9P2" name="g9P2" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="91">
+                    </div>
+                </div>
+                <div class="row align-items-center mb-1">
+                    <div class="col-2 text-end fw-bold">Г10:</div>
+                    <div class="col-4">
+                        <label for="g10P1" class="form-label visually-hidden">Кф. Г10 И1</label>
+                        <input id="g10P1" name="g10P1" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="85">
+                    </div>
+                    <div class="col-4">
+                        <label for="g10P2" class="form-label visually-hidden">Кф. Г10 И2</label>
+                        <input id="g10P2" name="g10P2" type="text" class="form-control form-control-sm text-center" maxlength="2" inputmode="decimal" autocomplete="off" placeholder="91">
+                    </div>
+                </div>
+
             </form>
             <div id="result" class="mt-4 p-3 border rounded" style="display: none;">
                 <h4 class="text-center">Результат:</h4>
