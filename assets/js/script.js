@@ -1,80 +1,86 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Добавлен 'matchFormat' в список полей, чтобы он тоже вызывал пересчет
+    // Список всех полей, включая 12 коэффициентов
     const fields = [
-        'matchFormat', // Новое поле
         'currentGamesP1', 'currentGamesP2', 'currentGamePointsP1', 'currentGamePointsP2',
-        'gNextP1', 'gNextP2'
+        'g5P1', 'g5P2', 'g6P1', 'g6P2', 'g7P1', 'g7P2',
+        'g8P1', 'g8P2', 'g9P1', 'g9P2', 'g10P1', 'g10P2'
     ];
 
-    // Функция для очистки и форматирования коэффициентов (X.XX)
+    // Функция для очистки и форматирования коэффициентов (автоматическое добавление "1.")
     function handleCoeffInput(e, idx) {
         let input = e.target;
-        if (input.type === 'text') {
-            let val = input.value.replace(/[^\d]/g, '');
+        // Очищаем от всего, кроме цифр
+        let val = input.value.replace(/[^\d]/g, '');
 
-            if (val.length > 1) {
-                val = val.slice(0, 1) + '.' + val.slice(1, 3);
-            }
-            if (val.length > 4) val = val.slice(0, 4);
+        if (val.length > 2) {
+            val = val.slice(0, 2); // Ограничиваем до двух цифр
+        }
 
-            input.value = val;
+        // Если введены две цифры, форматируем в "1.XX"
+        if (val.length === 2) {
+            input.value = `1.${val}`;
+        } else {
+            input.value = val; // Иначе оставляем как есть
+        }
 
-            if (val.length === 4) {
-                if (idx === fields.length - 1) {
+        // Переход на следующее поле или запуск расчета
+        if (val.length === 2) { // Проверяем, что введены 2 цифры
+            if (idx === fields.length - 1) {
+                input.blur(); // Убираем фокус с последнего поля
+                calculateWinner();
+            } else {
+                let nextInputFound = false;
+                for (let i = idx + 1; i < fields.length; i++) {
+                    const nextInput = document.getElementById(fields[i]);
+                    if (nextInput) { // Просто переходим к следующему полю в списке
+                        nextInput.focus();
+                        nextInputFound = true;
+                        break;
+                    }
+                }
+                if (!nextInputFound) { // Если следующее поле не найдено (хотя такого быть не должно)
                     input.blur();
                     calculateWinner();
-                } else {
-                    let nextInputFound = false;
-                    for (let i = idx + 1; i < fields.length; i++) {
-                        const nextInput = document.getElementById(fields[i]);
-                        if (nextInput && nextInput.type === 'text') {
-                            nextInput.focus();
-                            nextInputFound = true;
-                            break;
-                        }
-                    }
-                    if (!nextInputFound) {
-                        input.blur();
-                        calculateWinner();
-                    }
                 }
             }
         }
-        calculateWinner();
+        calculateWinner(); // Также вызываем расчет при каждом изменении, чтобы динамически обновлять
     }
 
-    // Функция для обработки вставки коэффициентов
+    // Функция для обработки вставки коэффициентов (также форматируем в "1.XX")
     function handleCoeffPaste(e, idx) {
         e.preventDefault();
         let input = e.target;
-        if (input.type === 'text') {
-            let text = (e.clipboardData || window.clipboardData).getData('text');
-            text = text.replace(/[^\d]/g, '');
+        let text = (e.clipboardData || window.clipboardData).getData('text');
+        text = text.replace(/[^\d]/g, ''); // Очищаем от всего, кроме цифр
 
-            if (text.length > 1) {
-                text = text.slice(0, 1) + '.' + text.slice(1, 3);
-            }
-            if (text.length > 4) text = text.slice(0, 4);
+        if (text.length > 2) {
+            text = text.slice(0, 2); // Ограничиваем до двух цифр
+        }
 
+        if (text.length === 2) {
+            input.value = `1.${text}`;
+        } else {
             input.value = text;
-            if (text.length === 4) {
-                 if (idx === fields.length - 1) {
+        }
+
+        if (text.length === 2) {
+            if (idx === fields.length - 1) {
+                input.blur();
+                calculateWinner();
+            } else {
+                let nextInputFound = false;
+                for (let i = idx + 1; i < fields.length; i++) {
+                    const nextInput = document.getElementById(fields[i]);
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInputFound = true;
+                        break;
+                    }
+                }
+                if (!nextInputFound) {
                     input.blur();
                     calculateWinner();
-                } else {
-                    let nextInputFound = false;
-                    for (let i = idx + 1; i < fields.length; i++) {
-                        const nextInput = document.getElementById(fields[i]);
-                        if (nextInput && nextInput.type === 'text') {
-                            nextInput.focus();
-                            nextInputFound = true;
-                            break;
-                        }
-                    }
-                    if (!nextInputFound) {
-                        input.blur();
-                        calculateWinner();
-                    }
                 }
             }
         }
@@ -84,12 +90,12 @@ document.addEventListener('DOMContentLoaded', function() {
     fields.forEach((id, idx) => {
         const input = document.getElementById(id);
         if (input) {
-            if (input.type === 'text') {
-                input.setAttribute('maxlength', '4');
+            if (input.type === 'text') { // Применяем только к текстовым полям (коэффициентам)
+                input.setAttribute('maxlength', '2'); // Теперь 2 символа
                 input.setAttribute('inputmode', 'decimal');
                 input.classList.add('text-center');
                 input.addEventListener('input', (e) => handleCoeffInput(e, idx));
-                input.addEventListener('paste', (e) => handleCoeffPaste(e, idx));
+                input.addEventListener('paste', (e) => handleCocoeffPaste(e, idx));
                 input.addEventListener('keypress', function(event) {
                     if (event.key === 'Enter') {
                         event.preventDefault();
@@ -100,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             let nextInputFound = false;
                             for (let i = idx + 1; i < fields.length; i++) {
                                 const nextInput = document.getElementById(fields[i]);
-                                if (nextInput && nextInput.type === 'text') {
+                                if (nextInput) {
                                     nextInput.focus();
                                     nextInputFound = true;
                                     break;
@@ -114,9 +120,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             } else if (input.type === 'number' || input.type === 'radio') {
-                // Добавил event listener для радио-кнопок matchFormat
                 input.addEventListener('input', calculateWinner);
-                input.addEventListener('change', calculateWinner); // Для радио кнопок
+                input.addEventListener('change', calculateWinner);
                 input.addEventListener('keypress', function(event) {
                     if (event.key === 'Enter') {
                         event.preventDefault();
@@ -135,121 +140,99 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Функция для обновления информации о текущем гейме и его статусе
+    // Функция для обновления информации о текущем гейме (упрощенная)
     function updateGameInfo() {
         const currentGamesP1 = parseInt(document.getElementById('currentGamesP1').value) || 0;
         const currentGamesP2 = parseInt(document.getElementById('currentGamesP2').value) || 0;
         const currentGamePointsP1 = parseInt(document.getElementById('currentGamePointsP1').value) || 0;
         const currentGamePointsP2 = parseInt(document.getElementById('currentGamePointsP2').value) || 0;
 
-        // Определяем формат матча (до 3 или до 4 побед)
-        const gamesToWin = parseInt(document.querySelector('input[name="matchFormat"]:checked').value) || 3; // По умолчанию до 3 побед
-
-        let gameNumber = currentGamesP1 + currentGamesP2 + 1; // Номер гейма, который сейчас идет или будет следующим
+        let gameNumber = currentGamesP1 + currentGamesP2 + 1;
 
         const gameInfoSpan = document.getElementById('current_game_info');
         if (gameInfoSpan) {
             let infoText = `Гейм ${gameNumber}`;
-
-            // Проверяем, является ли текущий гейм потенциально решающим
-            const maxGamesForMatch = (gamesToWin * 2) - 1; // Максимальное количество геймов в матче (например, для 3 побед это 2*3-1=5 геймов)
-            const gamesRemainingForP1 = gamesToWin - currentGamesP1;
-            const gamesRemainingForP2 = gamesToWin - currentGamesP2;
-
-            if (gameNumber > maxGamesForMatch) {
-                // Если счет по геймам уже превысил максимальное количество геймов для матча
-                // (например, если было 2-2, а играют до 3 побед, и начался 5 гейм - это решающий)
-                if (Math.max(currentGamesP1, currentGamesP2) === (gamesToWin - 1) &&
-                    Math.min(currentGamesP1, currentGamesP2) === (gamesToWin - 1)) {
-                    infoText += ` (Решающий гейм)`;
-                } else if (Math.max(currentGamesP1, currentGamesP2) === gamesToWin) {
-                     infoText = `Матч завершен: И1 ${currentGamesP1}-${currentGamesP2} И2`;
-                     // Возможно, здесь стоит отключить поля ввода кф и результат
-                }
-            } else if (currentGamesP1 === (gamesToWin - 1) && currentGamesP2 === (gamesToWin - 1)) {
-                 // Например, 2-2 при формате "До 3 побед" - это 5-й гейм, он решающий
-                infoText += ` (Решающий гейм)`;
-            } else if (currentGamesP1 === (gamesToWin - 1) && currentGamesP2 < (gamesToWin - 1)) {
-                // Игрок 1 в одном гейме от победы
-                 infoText += ` (Матчбол И1)`;
-            } else if (currentGamesP2 === (gamesToWin - 1) && currentGamesP1 < (gamesToWin - 1)) {
-                // Игрок 2 в одном гейме от победы
-                 infoText += ` (Матчбол И2)`;
-            }
-
-            // Добавляем счет по очкам, если гейм уже идет
             if (currentGamePointsP1 > 0 || currentGamePointsP2 > 0) {
                 infoText += ` (счет ${currentGamePointsP1}-${currentGamePointsP2})`;
-            } else if (gameNumber <= maxGamesForMatch) {
-                 infoText += ` (следующий гейм)`; // Только если матч еще не завершен
+            } else {
+                infoText += ` (0-0)`; // Показываем 0-0 если очки не введены
             }
-
             gameInfoSpan.textContent = infoText;
         }
     }
 
-    // Вызываем updateGameInfo при каждом расчете и при загрузке
-    function calculateWinner() {
-        updateGameInfo(); // Обновляем информацию о гейме перед расчетом
 
-        let player1Coeffs = [], player2Coeffs = [];
-        let allCoeffsFilled = true;
+    // Главная функция расчета
+    function calculateWinner() {
+        updateGameInfo(); // Обновляем информацию о гейме
+
+        let player1Coeffs = [];
+        let player2Coeffs = [];
+        let allCoeffsValid = true; // Будем проверять на валидность
 
         const currentGamesP1 = parseInt(document.getElementById('currentGamesP1').value) || 0;
         const currentGamesP2 = parseInt(document.getElementById('currentGamesP2').value) || 0;
-
         const currentGamePointsP1 = parseInt(document.getElementById('currentGamePointsP1').value) || 0;
         const currentGamePointsP2 = parseInt(document.getElementById('currentGamePointsP2').value) || 0;
-
         const servingPlayer = document.querySelector('input[name="servingPlayer"]:checked').value;
-        const gamesToWin = parseInt(document.querySelector('input[name="matchFormat"]:checked').value) || 3;
 
-        // Проверка на завершение матча
-        if (currentGamesP1 >= gamesToWin || currentGamesP2 >= gamesToWin) {
-            document.getElementById('error').textContent = 'Матч уже завершен.';
-            document.getElementById('error').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
-            // Дополнительно можно отключить поля ввода коэффициентов
-            document.getElementById('gNextP1').disabled = true;
-            document.getElementById('gNextP2').disabled = true;
-            return;
-        } else {
-             document.getElementById('gNextP1').disabled = false;
-             document.getElementById('gNextP2').disabled = false;
-        }
+        // Собираем коэффициенты для геймов 5-10
+        for (let i = 5; i <= 10; i++) {
+            const p1CoeffInput = document.getElementById(`g${i}P1`);
+            const p2CoeffInput = document.getElementById(`g${i}P2`);
 
-        const p1 = document.getElementById('gNextP1');
-        const p2 = document.getElementById('gNextP2');
+            if (p1CoeffInput && p2CoeffInput) {
+                const p1Val = parseFloat(p1CoeffInput.value);
+                const p2Val = parseFloat(p2CoeffInput.value);
 
-        if (p1 && p2) {
-            if (p1.value.length === 4 && p2.value.length === 4) {
-                player1Coeffs.push(parseFloat(p1.value));
-                player2Coeffs.push(parseFloat(p2.value));
-                p1.classList.remove('is-invalid');
-                p2.classList.remove('is-invalid');
-            } else {
-                allCoeffsFilled = false;
-                if (p1.value.length > 0 && p1.value.length !== 4) p1.classList.add('is-invalid');
-                else if (p1.value.length === 0) p1.classList.remove('is-invalid');
-                if (p2.value.length > 0 && p2.value.length !== 4) p2.classList.add('is-invalid');
-                else if (p2.value.length === 0) p2.classList.remove('is-invalid');
+                // Если поле пустое или не является числом, оно невалидно.
+                // Но мы не хотим выводить ошибку, если пользователь просто не ввел все 12.
+                // Просто игнорируем невалидные коэффициенты в расчете.
+                if (!isNaN(p1Val) && p1Val >= 1.00 && p1Val < 2.00) { // Проверяем на адекватность кф
+                    player1Coeffs.push(p1Val);
+                    p1CoeffInput.classList.remove('is-invalid');
+                } else if (p1CoeffInput.value.length > 0) { // Если что-то введено, но невалидно
+                    p1CoeffInput.classList.add('is-invalid');
+                    allCoeffsValid = false;
+                } else {
+                    p1CoeffInput.classList.remove('is-invalid'); // Если пусто, то не ошибка
+                }
+
+                if (!isNaN(p2Val) && p2Val >= 1.00 && p2Val < 2.00) {
+                    player2Coeffs.push(p2Val);
+                    p2CoeffInput.classList.remove('is-invalid');
+                } else if (p2CoeffInput.value.length > 0) {
+                    p2CoeffInput.classList.add('is-invalid');
+                    allCoeffsValid = false;
+                } else {
+                    p2CoeffInput.classList.remove('is-invalid');
+                }
             }
-        } else {
-            allCoeffsFilled = false;
         }
 
-        if (!allCoeffsFilled || player1Coeffs.length < 1) {
-            document.getElementById('error').textContent = 'Заполните коэффициенты на гейм в формате X.XX';
+        // Если введены невалидные коэффициенты, показываем ошибку
+        if (!allCoeffsValid) {
+            document.getElementById('error').textContent = 'Проверьте введенные коэффициенты (например, "85" для 1.85).';
             document.getElementById('error').style.display = 'block';
             document.getElementById('result').style.display = 'none';
             return;
         }
+
+        // Если нет ни одного валидного коэффициента, то не рассчитываем
+        if (player1Coeffs.length === 0 || player2Coeffs.length === 0) {
+            document.getElementById('error').textContent = 'Введите хотя бы одну пару коэффициентов.';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            return;
+        }
+
 
         document.getElementById('error').style.display = 'none';
         document.getElementById('error').textContent = '';
 
-        const sumDecimalPlayer1 = player1Coeffs[0] % 1;
-        const sumDecimalPlayer2 = player2Coeffs[0] % 1;
+        // Суммируем десятичные части всех введенных коэффициентов
+        const sumDecimalPlayer1 = player1Coeffs.reduce((sum, coeff) => sum + (coeff % 1), 0);
+        const sumDecimalPlayer2 = player2Coeffs.reduce((sum, coeff) => sum + (coeff % 1), 0);
 
         let adjustedSumPlayer1 = sumDecimalPlayer1;
         let adjustedSumPlayer2 = sumDecimalPlayer2;
@@ -299,4 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('winner').textContent = winnerMessage;
         document.getElementById('result').style.display = 'block';
     }
+
+    // Инициализируем расчет при загрузке, чтобы показать актуальную информацию
+    calculateWinner();
 });
