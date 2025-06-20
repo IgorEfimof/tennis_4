@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (text.length === 3) {
             text = text.substring(0, 1) + '.' + text.substring(1, 3);
         } else if (text.length > 3) {
-            text = text.substring(0, 0) + '.' + text.substring(0, 0); // Should be 1.XX format, limiting to 2 decimal places.
+            text = text.substring(0, 1) + '.' + text.substring(1, 3); 
         } else if (text.length === 2) {
              text = '1.' + text;
         }
@@ -227,12 +227,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Overall Spread Verdict
         let spreadVerdictMessage = "Вердикт по разбегу: ";
 
-        // Determine if a player is "stronger" based on decrease spread (your new logic)
-        // A player has "higher chances" if totalDecreaseSpread > 0 and totalDecreaseSpread > totalIncreaseSpread
         let p1HasHigherChances = (totalDecreaseSpreadP1 > 0) && (totalDecreaseSpreadP1 > totalIncreaseSpreadP1);
         let p2HasHigherChances = (totalDecreaseSpreadP2 > 0) && (totalDecreaseSpreadP2 > totalIncreaseSpreadP2);
 
-        // Check if there was any significant movement to provide a verdict
         const anySpreadMovement = (totalDecreaseSpreadP1 + totalIncreaseSpreadP1 + totalDecreaseSpreadP2 + totalIncreaseSpreadP2) > 0;
 
         if (!anySpreadMovement) {
@@ -242,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (!p1HasHigherChances && p2HasHigherChances) {
             spreadVerdictMessage += "**Игрок 2** имеет выше шансы.";
         } else if (p1HasHigherChances && p2HasHigherChances) {
-            // Both have higher chances based on their own internal spread. Now compare their absolute decrease spread.
             if (totalDecreaseSpreadP1 > totalDecreaseSpreadP2) {
                 spreadVerdictMessage += "Оба игрока сильны, но у **Игрока 1** более выражено снижение Кф.";
             } else if (totalDecreaseSpreadP2 > totalDecreaseSpreadP1) {
@@ -251,14 +247,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 spreadVerdictMessage += "Оба игрока **сильны** (одинаковое преобладание снижения Кф.)";
             }
         } else {
-            // Cases where neither player has a clear "higher chances" based on the (↓ > ↑) rule
-            // This includes scenarios where ↓ < ↑ for both, or ↓ = ↑ for both/one, or only ↑ occurred.
-            if (totalIncreaseSpreadP1 > 0 || totalIncreaseSpreadP2 > 0) { // If there was some increase in coefficients
+            if (totalIncreaseSpreadP1 > 0 || totalIncreaseSpreadP2 > 0) { 
                 spreadVerdictMessage += "Неопределённо (преобладание повышения Кф. или нейтрально)";
-            } else { // No clear trend
+            } else {
                  spreadVerdictMessage += "Неопределённо";
             }
         }
+
+        // --- New Calculation: Smallest Decimal Part Wins ---
+        let player1SmallestDecimalWins = 0;
+        let player2SmallestDecimalWins = 0;
+        let comparisonCount = 0; // Count of valid comparisons made
+
+        for (let i = 0; i < games.length; i++) {
+            const p1Current = player1Coeffs[i];
+            const p2Current = player2Coeffs[i];
+
+            if (!isNaN(p1Current) && !isNaN(p2Current)) {
+                // Get decimal part as an integer (e.g., 1.62 -> 62)
+                const decimalP1 = Math.round((p1Current % 1) * 100);
+                const decimalP2 = Math.round((p2Current % 1) * 100);
+                
+                if (decimalP1 < decimalP2) {
+                    player1SmallestDecimalWins++;
+                } else if (decimalP2 < decimalP1) {
+                    player2SmallestDecimalWins++;
+                }
+                // If decimals are equal, neither player gets a "win" for this game.
+                comparisonCount++;
+            }
+        }
+
+        let smallestDecimalWinnerMessage = "Вероятный победитель (меньшая дес. часть): ";
+
+        if (comparisonCount === 0) {
+            smallestDecimalWinnerMessage += "Недостаточно данных (нет пар Кф. для сравнения)";
+        } else if (player1SmallestDecimalWins > player2SmallestDecimalWins) {
+            smallestDecimalWinnerMessage += `**Игрок 1** (${player1SmallestDecimalWins} против ${player2SmallestDecimalWins})`;
+        } else if (player2SmallestDecimalWins > player1SmallestDecimalWins) {
+            smallestDecimalWinnerMessage += `**Игрок 2** (${player2SmallestDecimalWins} против ${player1SmallestDecimalWins})`;
+        } else {
+            smallestDecimalWinnerMessage += "Ничья (равное количество меньших дес. частей)";
+        }
+
 
         document.getElementById('player1_sum').textContent = `Сумма дес. частей (И1): ${totalDecimalPlayer1.toFixed(4)}`;
         document.getElementById('player2_sum').textContent = `Сумма дес. частей (И2): ${totalDecimalPlayer2.toFixed(4)}`;
@@ -267,6 +298,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('p1_spread_summary').innerHTML = p1SpreadDetails;
         document.getElementById('p2_spread_summary').innerHTML = p2SpreadDetails;
         document.getElementById('overall_winner_spread_analysis').innerHTML = spreadVerdictMessage;
+
+        document.getElementById('overall_winner_smallest_decimal').innerHTML = smallestDecimalWinnerMessage; // Output new result
 
         document.getElementById('result').style.display = 'block';
     }
